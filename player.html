@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Player - Arena Pancasila SD</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,700;0,900;1,700&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      background: #090d16; color: #f8fafc; font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 15px; overflow-x: hidden;
+    }
+    .hidden { display: none !important; }
+
+    .ios-card {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 24px;
+      padding: 22px 18px;
+      width: 100%; max-width: 420px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      position: relative;
+      z-index: 2;
+    }
+
+    .status-bar {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 14px;
+      margin: 8px 0 12px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .stats-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      width: 100%;
+      align-items: center;
+    }
+
+    .score-display {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: #38bdf8;
+      text-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+    }
+
+    .lives-display {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #f43f5e;
+    }
+
+    .student-timer {
+      font-family: 'Noto Serif', serif;
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #cbd5e1;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 4px 14px;
+      border-radius: 12px;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+
+    .btn-bonus-claim {
+      width: 100%;
+      background: linear-gradient(135deg, #facc15 0%, #ca8a04 100%);
+      border: 1px solid #fef08a;
+      color: #1e293b;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 0.82rem;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(250, 204, 21, 0.3);
+      transition: all 0.2s ease;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    
+    .btn-bonus-claim:disabled {
+      background: rgba(51, 65, 85, 0.5);
+      border-color: rgba(255, 255, 255, 0.1);
+      color: #64748b;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    .ios-q-box {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      padding: 16px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      line-height: 1.5;
+      color: #f1f5f9;
+      text-align: left;
+      margin-bottom: 15px;
+    }
+
+    .ios-btn-opt {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #f8fafc;
+      padding: 12px 14px;
+      margin: 6px 0;
+      border-radius: 14px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+    .ios-btn-opt:active {
+      transform: scale(0.97);
+      background: #38bdf8;
+      color: #0f172a;
+    }
+
+    .opt-prefix {
+      background: rgba(255, 255, 255, 0.15);
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 0.8rem; flex-shrink: 0;
+    }
+
+    .btn-team {
+      width: 100%; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); color: #f8fafc;
+      padding: 14px; margin: 6px 0; border-radius: 14px; font-weight: 700; cursor: pointer;
+    }
+    .btn-team:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .input-ios {
+      width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(56, 189, 248, 0.4);
+      background: rgba(15, 23, 42, 0.8); color: #fff; margin: 8px 0; font-weight: 600; font-size: 0.9rem;
+      outline: none;
+    }
+    textarea.input-ios { resize: vertical; min-height: 70px; font-family: inherit; text-align: left; }
+
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(9, 13, 22, 0.92); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center; z-index: 9999;
+    }
+
+    .roman-box {
+      background: radial-gradient(circle, #064e3b 0%, #022c22 100%);
+      border: 3px solid #f59e0b; border-radius: 20px; padding: 22px 18px;
+      width: 88%; max-width: 360px; text-align: center;
+    }
+
+    .gameover-box {
+      background: radial-gradient(circle, #450a0a 0%, #180505 100%);
+      border: 3px solid #ef4444; border-radius: 20px; padding: 24px 18px;
+      width: 88%; max-width: 360px; text-align: center; box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);
+    }
+
+    .bonus-box {
+      background: rgba(15, 23, 42, 0.95); border: 2px solid #ef4444;
+      border-radius: 20px; padding: 20px 16px; width: 88%; max-width: 360px; text-align: center;
+    }
+    .feedback-box {
+      background: rgba(15, 23, 42, 0.95); border: 2px solid #38bdf8;
+      border-radius: 20px; padding: 20px 16px; width: 88%; max-width: 380px; text-align: center;
+    }
+
+    .finish-box {
+      background: radial-gradient(circle, #1e3a8a 0%, #0f172a 100%);
+      border: 3px solid #38bdf8; border-radius: 22px; padding: 24px 18px;
+      width: 88%; max-width: 380px; text-align: center; box-shadow: 0 0 40px rgba(56, 189, 248, 0.4);
+      position: relative; overflow: hidden;
+    }
+
+    .confetti-gif {
+      width: 120px; height: 120px; margin: 0 auto 10px auto; display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SCREEN 1: PILIH TIM -->
+  <div id="screen-select" class="ios-card">
+    <h3 style="color: #38bdf8; margin-bottom: 5px; font-family: 'Noto Serif', serif; font-size: 1.3rem;">PILIH DELEGASI TIM</h3>
+    <p style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 15px;">Pilih kelompokmu untuk memulai kuis! (Maks 6 Tim)</p>
+    <div id="team-list"></div>
+  </div>
+
+  <!-- SCREEN 2: ARENA SISWA -->
+  <div id="screen-play" class="ios-card hidden">
+    <div id="team-title" style="color: #38bdf8; font-weight: 800; font-size: 1.2rem;">TIM</div>
+    
+    <div class="status-bar">
+      <div class="stats-info">
+        <span id="txt-score" class="score-display">🏆 0 Pts</span>
+        <span id="txt-lives" class="lives-display">❤️ 3 Nyawa</span>
+      </div>
+      <button id="btn-claim-life" class="btn-bonus-claim" onclick="openBonusModal()">
+        <span>❤️</span> SOAL BONUS (+1 NYAWA)
+      </button>
+    </div>
+
+    <div id="student-timer" class="student-timer">⏱️ 00:35</div>
+
+    <div id="name-box" style="margin: 5px 0 10px 0; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+      <label style="font-size: 0.75rem; color: #38bdf8; font-weight: 700;">👤 ANGGOTA TIM :</label>
+      <input type="text" id="student-name" class="input-ios" placeholder="Tuliskan nama lengkapmu...">
+    </div>
+
+    <div id="wait-msg" style="color: #94a3b8; margin: 20px 0; font-size: 0.85rem; font-style: italic;">
+      ⏳ Menunggu Guru Memulai Soal...
+    </div>
+
+    <div id="action-box" class="hidden">
+      <div id="q-text-player" class="ios-q-box">
+        <div id="flashcard-player-content" class="hidden" style="background: rgba(56, 189, 248, 0.15); border: 1px dashed #38bdf8; padding: 10px; border-radius: 10px; font-weight: bold; color: #38bdf8; margin-bottom: 10px;"></div>
+        <span id="main-q-txt"></span>
+      </div>
+
+      <div id="options-player"></div>
+    </div>
+
+    <button id="btn-open-feedback" onclick="openFeedbackModal()" style="background: transparent; border: 1px dashed rgba(255,255,255,0.2); color: #94a3b8; font-size: 0.75rem; padding: 8px; border-radius: 10px; width: 100%; margin-top: 15px; cursor: pointer;">
+      💬 Beri Pesan / Kesan untuk Pembelajaran Hari Ini
+    </button>
+  </div>
+
+  <!-- DIALOG BOX JAWABAN TERKUNCI (MUNCUL KETIKA JAWABAN DIKLIK) -->
+  <div id="roman-dialog" class="modal-overlay hidden">
+    <div class="roman-box">
+      <div style="font-size: 1.6rem; margin-bottom: 4px;">🏛️ 🛡️ 🏛️</div>
+      <div style="font-size: 0.9rem; font-weight: 800; color: #22c55e; border: 1px solid #15803d; padding: 6px; border-radius: 10px; margin: 10px 0;">🔒 JAWABAN TERKUNCI</div>
+      
+      <div style="border-top: 1px dashed #f59e0b; padding-top: 10px; text-align: left;">
+        <p style="font-size: 0.75rem; color: #fbbf24; margin-bottom: 5px;">Butuh Bantuan? Klaim Nyawa:</p>
+        <button class="btn-bonus-claim" onclick="openBonusModal()">❤️ KLAIM NYAWA</button>
+        
+        <p style="font-size: 0.75rem; color: #38bdf8; margin: 10px 0 5px 0;">Kritik & Saran:</p>
+        <textarea id="dialog-fb-text" class="input-ios" placeholder="Tulis masukan di sini..." style="min-height: 50px;"></textarea>
+        <button onclick="submitFeedbackFromDialog()" style="width:100%; padding:5px; background:#0284c7; border-radius:5px; border:none; color:white; font-size:0.8rem; cursor:pointer;">Kirim Masukan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIALOG BOX GAMEOVER -->
+  <div id="gameover-dialog" class="modal-overlay hidden">
+    <div class="gameover-box">
+      <div style="font-size: 2.5rem; margin-bottom: 8px;">💀 ❌</div>
+      <div style="font-family: 'Noto Serif', serif; font-size: 1.2rem; font-weight: 900; color: #ef4444; margin-bottom: 8px;">PERMAINAN SELESAI</div>
+      <div style="font-size: 0.95rem; font-weight: 700; color: #fecdd3; background: rgba(0,0,0,0.5); padding: 12px; border-radius: 12px; border: 1px solid #991b1b; line-height: 1.4;">
+        maaf kamu tidak bisa melanjutkan permainan
+      </div>
+    </div>
+  </div>
+
+  <!-- DIALOG BOX SELESAI KUIS -->
+  <div id="game-finished-dialog" class="modal-overlay hidden">
+    <div class="finish-box">
+      <img src="https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif" alt="Confetti Celebration" class="confetti-gif">
+      
+      <div style="font-family: 'Noto Serif', serif; font-size: 1.4rem; font-weight: 900; color: #facc15; margin-bottom: 6px;">🎉 SELAMAT! 🎉</div>
+      <div style="font-size: 0.9rem; font-weight: 700; color: #38bdf8; margin-bottom: 12px;">Kuis Telah Selesai, Hebat Sekali!</div>
+      
+      <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 14px; padding: 14px; margin-bottom: 15px;">
+        <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 700; margin-bottom: 4px;">PEROLEHAN SKOR AKHIR TIM:</div>
+        <div id="final-score-display" style="font-size: 2rem; font-weight: 900; color: #f59e0b;">🏆 0 Pts</div>
+      </div>
+
+      <p style="font-size: 0.78rem; color: #cbd5e1; line-height: 1.4; font-style: italic;">
+        Terima kasih sudah berjuang bersama timmu memahami nilai-nilai Pancasila dengan luar biasa!
+      </p>
+    </div>
+  </div>
+
+  <!-- MODAL SOAL BONUS -->
+  <div id="bonus-modal" class="modal-overlay hidden">
+    <div class="bonus-box">
+      <div style="font-size: 1.8rem; margin-bottom: 4px;">❤️ 🛡️</div>
+      <h3 style="color: #ef4444; font-family: 'Noto Serif', serif; font-size: 1.1rem; margin-bottom: 5px;">SOAL BONUS (+1 NYAWA)</h3>
+      <p style="font-size: 0.72rem; color: #94a3b8; margin-bottom: 10px;">Tentukan Benar atau Salah pernyataan berikut!</p>
+      
+      <div class="ios-q-box" style="font-size: 0.85rem; text-align: center; margin-bottom: 12px;">
+        <span id="bonus-q-text">-</span>
+      </div>
+
+      <button class="ios-btn-opt" style="border-color: #22c55e;" onclick="submitBonusAnswer(true)">
+        <span class="opt-prefix" style="background: rgba(34,197,94,0.2); color: #22c55e;">A</span>
+        <span>BENAR</span>
+      </button>
+
+      <button class="ios-btn-opt" style="border-color: #ef4444;" onclick="submitBonusAnswer(false)">
+        <span class="opt-prefix" style="background: rgba(239,68,68,0.2); color: #ef4444;">B</span>
+        <span>SALAH</span>
+      </button>
+
+      <button style="background: transparent; border: none; color: #64748b; font-size: 0.78rem; margin-top: 10px; text-decoration: underline; cursor: pointer;" onclick="closeBonusModal()">
+        Batal / Tutup
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL KRITIK & SARAN -->
+  <div id="feedback-modal" class="modal-overlay hidden">
+    <div class="feedback-box">
+      <h3 style="color: #38bdf8; font-family: 'Noto Serif', serif; font-size: 1.1rem; margin-bottom: 6px;">💬 KRITIK & SARAN KELAS</h3>
+      <p style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 12px;">Bagaimana perasaanmu belajar Pancasila hari ini?</p>
+      
+      <input type="text" id="fb-student-name" class="input-ios" placeholder="Nama Siswa (Boleh Anonim)...">
+      <textarea id="fb-text" class="input-ios" placeholder="Tuliskan saran atau perasaanmu untuk Guru hari ini..."></textarea>
+
+      <button id="btn-submit-fb" class="ios-btn-opt" style="border-color: #38bdf8; justify-content: center; background: #0284c7; font-weight: 800; margin-top: 10px;" onclick="submitFeedback()">
+        🚀 Kirim Kritik & Saran
+      </button>
+
+      <button style="background: transparent; border: none; color: #64748b; font-size: 0.78rem; margin-top: 8px; text-decoration: underline; cursor: pointer;" onclick="closeFeedbackModal()">
+        Tutup
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = { databaseURL: "https://pancasila-5ff7a-default-rtdb.firebaseio.com/" };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    const bonusQuestions = [
+      { q: "Dokumen Piagam Jakarta dirumuskan oleh Panitia Sembilan pada tanggal 22 Juni 1945.", ans: true },
+      { q: "Sidang Pertama BPUPKI berlangsung dari tanggal 29 Mei hingga 1 Juni 1945.", ans: true },
+      { q: "PPKI dibentuk sebelum BPUPKI dibubarkan oleh pihak Jepang.", ans: false },
+      { q: "Perumusan kalimat Sila Pertama Pancasila diubah atas usulan perwakilan Indonesia bagian Timur.", ans: true }
+    ];
+
+    let myTeamKey = "";
+    let myTeamName = "";
+    let currentQId = ""; 
+    let selectedBonusQ = null;
+    let isBonusUsed = false;
+
+    if (localStorage.getItem('feedbackSent')) {
+      disableFeedbackBtn();
+    }
+
+    function disableFeedbackBtn() {
+      const btnOpen = document.getElementById('btn-open-feedback');
+      if (btnOpen) {
+        btnOpen.innerText = "✅ Kritik & Saran Sudah Terkirim";
+        btnOpen.disabled = true;
+        btnOpen.style.opacity = "0.5";
+        btnOpen.style.cursor = "not-allowed";
+      }
+    }
+
+    database.ref('teams').on('value', (snapshot) => {
+      const teams = snapshot.val();
+      if (!teams) return;
+      
+      if (!myTeamKey) {
+        const list = document.getElementById('team-list');
+        list.innerHTML = "";
+        
+        const teamKeys = Object.keys(teams).slice(0, 6);
+        teamKeys.forEach(k => {
+          const t = teams[k];
+          list.innerHTML += `
+            <button class="btn-team" ${t.taken ? 'disabled' : ''} onclick="pickTeam('${k}')">
+              ${t.name} ${t.taken ? '(Terisi)' : ''}
+            </button>
+          `;
+        });
+      } else {
+        const myTeam = teams[myTeamKey];
+        if (!myTeam) return;
+        myTeamName = myTeam.name;
+        isBonusUsed = myTeam.bonusUsed || false;
+
+        const currentLives = myTeam.lives !== undefined ? myTeam.lives : 3;
+        const currentScore = myTeam.score || 0;
+        
+        document.getElementById('txt-score').innerText = `🏆 ${currentScore} Pts`;
+        document.getElementById('txt-lives').innerText = `${"❤️".repeat(Math.max(0, currentLives))} (${currentLives} Nyawa)`;
+        document.getElementById('final-score-display').innerText = `🏆 ${currentScore} Pts`;
+
+        if (currentLives <= 0) {
+          document.getElementById('gameover-dialog').classList.remove('hidden');
+          document.getElementById('action-box').classList.add('hidden');
+          document.getElementById('roman-dialog').classList.add('hidden');
+          document.getElementById('bonus-modal').classList.add('hidden');
+          return;
+        } else {
+          document.getElementById('gameover-dialog').classList.add('hidden');
+        }
+
+        const claimBtn = document.getElementById('btn-claim-life');
+        if (isBonusUsed) {
+          claimBtn.disabled = true;
+          claimBtn.innerHTML = `<span>🛡️</span> BONUS SUDAH DIGUNAKAN`;
+        } else {
+          claimBtn.disabled = false;
+          claimBtn.innerHTML = `<span>❤️</span> SOAL BONUS (+1 NYAWA)`;
+        }
+      }
+    });
+
+    database.ref('gameState').on('value', (snapshot) => {
+      const state = snapshot.val();
+      if (!state) return;
+
+      const qId = state.qId || "";
+      const isLocked = state.locked || false;
+      const tVal = state.timerVal !== undefined ? state.timerVal : 0;
+
+      let m = Math.floor(tVal / 60);
+      let s = tVal % 60;
+      document.getElementById('student-timer').innerText = `⏱️ ${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+
+      if (qId === "finish" || state.isFinished) {
+        document.getElementById('game-finished-dialog').classList.remove('hidden');
+        document.getElementById('roman-dialog').classList.add('hidden');
+        document.getElementById('action-box').classList.add('hidden');
+        document.getElementById('wait-msg').classList.add('hidden');
+        return;
+      } else {
+        document.getElementById('game-finished-dialog').classList.add('hidden');
+      }
+
+      if (qId !== currentQId) {
+        currentQId = qId;
+        hideRomanDialog();
+      }
+
+      if (isLocked || tVal <= 0) {
+        hideRomanDialog();
+        document.getElementById('action-box').classList.add('hidden');
+        document.getElementById('wait-msg').classList.remove('hidden');
+        document.getElementById('wait-msg').innerText = "⌛ Waktu Habis! Menyiapkan soal berikutnya...";
+        return;
+      }
+
+      if (state.questionVisible && state.qData) {
+        if (document.getElementById('roman-dialog').classList.contains('hidden')) {
+          document.getElementById('wait-msg').classList.add('hidden');
+          document.getElementById('action-box').classList.remove('hidden');
+          
+          document.getElementById('main-q-txt').innerText = state.qData.q;
+
+          const fcBox = document.getElementById('flashcard-player-content');
+          if (state.qData.content) {
+            fcBox.innerText = state.qData.content;
+            fcBox.classList.remove('hidden');
+          } else {
+            fcBox.classList.add('hidden');
+          }
+
+          const optBox = document.getElementById('options-player');
+          optBox.innerHTML = "";
+          state.qData.opts.forEach((o, idx) => {
+            optBox.innerHTML += `
+              <button class="ios-btn-opt" onclick="submitAnswer(${idx})">
+                <span class="opt-prefix">${String.fromCharCode(65+idx)}</span>
+                <span>${o}</span>
+              </button>
+            `;
+          });
+        }
+      } else {
+        hideRomanDialog();
+        document.getElementById('wait-msg').classList.remove('hidden');
+        document.getElementById('action-box').classList.add('hidden');
+        document.getElementById('wait-msg').innerText = "⏳ Menunggu Guru Memulai Soal...";
+      }
+    });
+
+    function pickTeam(key) {
+      myTeamKey = key;
+      database.ref(`teams/${key}/taken`).set(true);
+      document.getElementById('screen-select').classList.add('hidden');
+      document.getElementById('screen-play').classList.remove('hidden');
+      database.ref(`teams/${key}/name`).once('value', s => {
+        myTeamName = s.val();
+        document.getElementById('team-title').innerText = myTeamName;
+      });
+    }
+
+    // Fungsi klik jawaban yang langsung memunculkan dialog box terkunci
+    function submitAnswer(ansIdx) {
+      const nameInput = document.getElementById('student-name').value.trim();
+      if (!nameInput) {
+        alert("⚠️ Masukkan Nama Siswa Penjawab Terlebih Dahulu!");
+        return;
+      }
+
+      database.ref(`teams/${myTeamKey}`).update({
+        currentAns: ansIdx,
+        respondent: nameInput
+      });
+
+      document.getElementById('action-box').classList.add('hidden');
+      showRomanDialog();
+    }
+
+    function submitFeedbackFromDialog() {
+      const fbText = document.getElementById('dialog-fb-text').value.trim();
+      if(!fbText) return alert("⚠️ Tulis masukan terlebih dahulu!");
+      
+      database.ref('feedback').push({
+        team: myTeamName,
+        studentName: document.getElementById('student-name').value || "Anonim",
+        message: fbText,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+      });
+      document.getElementById('dialog-fb-text').value = "";
+      alert("✨ Terima kasih atas masukannya!");
+    }
+
+    function openBonusModal() {
+      if (isBonusUsed) {
+        alert("⚠️ Tim kamu sudah pernah menggunakan kesempatan Soal Bonus!");
+        return;
+      }
+      selectedBonusQ = bonusQuestions[Math.floor(Math.random() * bonusQuestions.length)];
+      document.getElementById('bonus-q-text').innerText = `"${selectedBonusQ.q}"`;
+      document.getElementById('bonus-modal').classList.remove('hidden');
+    }
+
+    function closeBonusModal() {
+      document.getElementById('bonus-modal').classList.add('hidden');
+    }
+
+    function submitBonusAnswer(userChoice) {
+      if (!myTeamKey) return;
+
+      if (userChoice === selectedBonusQ.ans) {
+        database.ref(`teams/${myTeamKey}`).once('value', snapshot => {
+          const tData = snapshot.val();
+          database.ref(`teams/${myTeamKey}`).update({
+            lives: (tData.lives || 0) + 1,
+            bonusUsed: true
+          });
+        });
+        alert("🎉 JAWABAN BENAR!\nTim kamu berhasil mendapatkan +1 Nyawa Tambahan!");
+      } else {
+        database.ref(`teams/${myTeamKey}`).update({
+          bonusUsed: true
+        });
+        alert("❌ JAWABAN SALAH!\nKesempatan Soal Bonus telah terpakai.");
+      }
+      closeBonusModal();
+    }
+
+    function openFeedbackModal() {
+      if (localStorage.getItem('feedbackSent')) {
+        alert("⚠️ Kamu sudah pernah mengirimkan kritik & saran!");
+        return;
+      }
+      document.getElementById('feedback-modal').classList.remove('hidden');
+    }
+
+    function closeFeedbackModal() {
+      document.getElementById('feedback-modal').classList.add('hidden');
+    }
+
+    function submitFeedback() {
+      if (localStorage.getItem('feedbackSent')) {
+        alert("⚠️ Kamu sudah pernah mengirimkan kritik & saran!");
+        return;
+      }
+
+      const fbName = document.getElementById('fb-student-name').value.trim() || "Anonim";
+      const fbText = document.getElementById('fb-text').value.trim();
+
+      if (!fbText) {
+        alert("⚠️ Tuliskan kesan atau saranmu terlebih dahulu!");
+        return;
+      }
+
+      database.ref('feedback').push({
+        team: myTeamName || "Tanpa Tim",
+        studentName: fbName,
+        message: fbText,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+      }).then(() => {
+        alert("✨ Terima kasih! Kritik & Saranmu sudah terkirim langsung ke Guru.");
+        localStorage.setItem('feedbackSent', 'true');
+        disableFeedbackBtn();
+        closeFeedbackModal();
+      }).catch(err => {
+        alert("Gagal mengirim feedback: " + err.message);
+      });
+    }
+
+    function showRomanDialog() {
+      document.getElementById('roman-dialog').classList.remove('hidden');
+    }
+
+    function hideRomanDialog() {
+      document.getElementById('roman-dialog').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
